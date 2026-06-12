@@ -1,0 +1,19 @@
+global:
+  [cite_start]scrape_interval: 10s # Set scrape interval to 10s exactly as required 
+
+# Load the custom alerting rules definition file 
+rule_files:
+  - "alert.rules.yml"
+
+# Link Prometheus to route active alerts to the Alertmanager container
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - "localhost:9093"
+
+# Scrape job configuration targeting our host process 
+scrape_configs:
+  - [cite_start]job_name: "sentiment-ml-exporter" # Must be named exactly as specified 
+    static_configs:
+      - [cite_start]targets: ["localhost:8000"] # Targets the custom exporter running at port 8000
