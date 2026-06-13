@@ -10,7 +10,6 @@ def health():
 @app.route('/predict', methods=['POST'])
 def predict():
     data = request.json
-    # Stable logic: just returns a hardcoded confidence
     return jsonify({"label":"POSITIVE", "confidence": 0.99, "model_version": "stable-v0-B08C"})
 
 if __name__ == '__main__':
