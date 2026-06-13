@@ -53,8 +53,8 @@ pipeline {
         stage('Build and Push') {
             steps {
                 echo "Pushing image to DockerHub natively..."
-                // Native shell authentication bypasses the missing Jenkins plugin
-                withCredentials([string(credentialsId: 'dockerhub-credentials-id', variable: 'DOCKERHUB_TOKEN')]) {
+                // ID updated to exactly match your Jenkins UI input: 'dockerhub-credentials'
+                withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKERHUB_TOKEN')]) {
                     sh '''
                         echo $DOCKERHUB_TOKEN | docker login -u abdullahghaffarr --password-stdin
                         docker tag sentiment-api:unstable abdullahghaffarr/sentiment-api:latest
