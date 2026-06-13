@@ -1,0 +1,78 @@
+================================================================================
+  SELF-HEALING MLOPS PIPELINE - EVALUATION REPORT
+================================================================================
+
+Student ID: FA23-BAI-059
+EC2 IP: localhost
+Evaluation Date: Sat Jun 13 16:37:45 UTC 2026
+
+FINAL SCORE: 44.0/50 (Grade: F)
+
+Breakdown:
+  1. CI/CD Pipeline & Testing ........................ 8/10
+  2. Containerization & Blue-Green K8s ............... 9.0/10
+  3. MLOps Monitoring ............................... 9.0/10
+  4. Self-Healing Automation ........................ 8.0/10
+  5. Per-Student Customization & Code Quality ....... 10.0/10
+
+================================================================================
+  DETAILED FINDINGS
+================================================================================
+
+[0;32m✓[0m GitHub repository exists: abdullahghaffar9/selfhealing-mlops-FA23-BAI-059
+[0;32m✓[0m Jenkinsfile exists: Jenkinsfile
+[0;32m✓[0m All 6 Jenkins stages found
+[0;32m✓[0m API unit tests exists: tests/test_api.py
+[0;32m✓[0m Test function found: test_health_endpoint
+[0;32m✓[0m Test function found: test_predict_returns_label_and_confidence
+[0;32m✓[0m Test function found: test_predict_negative_text
+[0;32m✓[0m Test function found: test_health_returns_model_version_unstable
+[0;32m✓[0m UI/Selenium tests exists: tests/test_ui.py
+[0;32m✓[0m Selenium test function found
+[0;32m✓[0m Docker images found on DockerHub
+[0;32m✓[0m Docker configuration exists: Dockerfile
+[0;32m✓[0m K8s manifest exists: k8s/blue-deployment.yaml
+[0;32m✓[0m K8s manifest exists: k8s/green-deployment.yaml
+[0;32m✓[0m K8s manifest exists: k8s/service.yaml
+[0;32m✓[0m K8s manifest exists: k8s/pvc.yaml
+[0;32m✓[0m EC2 instance reachable
+[0;32m✓[0m Blue deployment running with 2 replicas
+[0;32m✓[0m Green deployment running with 2 replicas
+[0;32m✓[0m NodePort correctly configured: 32500
+[0;32m✓[0m Health endpoint responding
+[0;31m✗[0m Model version not unstable-v1: {"model":"rule-based-stable-v0","model_version":"stable-v0-B08C","status":"healthy"}
+[0;32m✓[0m Service routing configured to: green
+[0;32m✓[0m Monitoring config exists: exporter.py
+[0;32m✓[0m Monitoring config exists: prometheus.yml
+[0;32m✓[0m Monitoring config exists: alert.rules.yml
+[0;32m✓[0m Monitoring config exists: alertmanager.yml
+[0;32m✓[0m Custom Prometheus exporter running on port 8000
+[0;32m✓[0m Metric value captured: prediction_confidence_score = 0.95
+[0;32m✓[0m Prometheus server responding
+[0;32m✓[0m Alertmanager running on port 9093
+[0;32m✓[0m Grafana running on port 3000
+[0;32m✓[0m Alert rules exists: alert.rules.yml
+[0;32m✓[0m ModelConfidenceDrift alert defined
+[0;31m✗[0m Drift injection endpoint not working or missing
+[0;32m✓[0m Prediction endpoint working, confidence: 0.95
+[0;32m✓[0m Jenkins server accessible
+[0;32m✓[0m Rollback Jenkins job exists
+[0;32m✓[0m Alertmanager config exists: alertmanager.yml
+[0;32m✓[0m Webhook token configured in Alertmanager
+[0;32m✓[0m Model recovery endpoint accessible
+[0;32m✓[0m Self-healing architecture in place
+[0;32m✓[0m Confidence threshold found in alert.rules.yml
+[0;32m✓[0m Threshold correctly set to 0.68
+[0;32m✓[0m Stable model code B08C appears exactly 2x in stable-fallback branch
+[0;32m✓[0m Webhook token found in alertmanager.yml
+[0;32m✓[0m All 15 required files present
+[0;32m✓[0m Python syntax valid: app.py
+[0;32m✓[0m Python syntax valid: exporter.py
+[0;32m✓[0m Python syntax valid: tests/test_api.py
+[0;32m✓[0m Python syntax valid: tests/test_ui.py
+[0;32m✓[0m README documentation exists
+
+================================================================================
+  RECOMMENDATIONS
+================================================================================
+- CI/CD Pipeline: Ensure all 6 Jenkins stages auto-trigger and complete successfully
