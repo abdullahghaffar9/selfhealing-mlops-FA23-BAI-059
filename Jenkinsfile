@@ -1,19 +1,27 @@
 pipeline {
     agent any
 
+    options {
+        // Automatically delete old build artifacts to save disk space
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        disableConcurrentBuilds()
+    }
+
     stages {
         stage('Fetch') {
             steps {
-                cleanWs()
+                cleanWs() // Ensure workspace is empty before starting
                 checkout scm
             }
         }
 
         stage('Build and Run') {
             steps {
-                echo "Building and running application..."
+                echo "Building application image..."
+                // Build the image using the optimized Dockerfile
                 sh 'docker build -t sentiment-api:unstable .'
-                sh 'docker run -d -p 32500:5000 --name sentiment-app sentiment-api:unstable'
+                // Run the container
+                sh 'docker run -d -p 32500:5000 --name sentiment-app sentiment-api:unstable || true'
             }
         }
 
@@ -34,6 +42,7 @@ pipeline {
         stage('Build and Push') {
             steps {
                 script {
+                    // Uses the registry credentials stored in Jenkins
                     docker.withRegistry('', 'dockerhub-credentials-id') {
                         sh 'docker tag sentiment-api:unstable abdullahghaffarr/sentiment-api:latest'
                         sh 'docker push abdullahghaffarr/sentiment-api:latest'
@@ -44,17 +53,21 @@ pipeline {
 
         stage('Deploy to Minikube') {
             steps {
-                echo "Deploying to Kubernetes..."
+                echo "Deploying to Kubernetes cluster..."
                 sh 'kubectl apply -f k8s/blue-deployment.yaml'
                 sh 'kubectl apply -f k8s/green-deployment.yaml'
                 sh 'kubectl apply -f k8s/service.yaml'
+                sh 'kubectl apply -f k8s/pvc.yaml'
             }
         }
     }
 
     post {
         always {
+            // Cleanup workspace after build to free disk space
             cleanWs()
+            // Optional: Remove container to prevent port conflicts
+            sh 'docker rm -f sentiment-app || true'
         }
     }
 }
