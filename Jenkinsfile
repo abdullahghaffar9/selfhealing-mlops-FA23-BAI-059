@@ -53,12 +53,12 @@ pipeline {
         stage('Build and Push') {
             steps {
                 echo "Pushing image to DockerHub natively..."
-                // ID updated to exactly match your Jenkins UI input: 'dockerhub-credentials'
-                withCredentials([string(credentialsId: 'dockerhub-credentials', variable: 'DOCKERHUB_TOKEN')]) {
+                // Using usernamePassword to match the credential type you created in Jenkins
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PAT', usernameVariable: 'DOCKER_USER')]) {
                     sh '''
-                        echo $DOCKERHUB_TOKEN | docker login -u abdullahghaffarr --password-stdin
-                        docker tag sentiment-api:unstable abdullahghaffarr/sentiment-api:latest
-                        docker push abdullahghaffarr/sentiment-api:latest
+                        echo $DOCKER_PAT | docker login -u $DOCKER_USER --password-stdin
+                        docker tag sentiment-api:unstable $DOCKER_USER/sentiment-api:latest
+                        docker push $DOCKER_USER/sentiment-api:latest
                     '''
                 }
             }
