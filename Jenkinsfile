@@ -39,7 +39,7 @@ pipeline {
                 docker run --rm --network host -v $(pwd):/workspace --entrypoint /bin/sh python:3.10-slim -c "
                     apt-get update && \
                     apt-get install -y chromium chromium-driver && \
-                    pip install -r /workspace/requirements.txt && \
+                    pip install pytest==8.2.2 selenium==4.21.0 && \
                     pytest /workspace/tests/test_ui.py
                 "
                 '''
