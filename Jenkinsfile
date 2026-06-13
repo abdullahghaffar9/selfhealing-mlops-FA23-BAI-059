@@ -24,7 +24,7 @@ pipeline {
                 echo "Waiting for ML Model to initialize..."
                 sh '''#!/bin/bash
                     for i in $(seq 1 20); do
-                        if curl -s http://localhost:5000/health > /dev/null; then
+                        if curl -s -f http://localhost:5000/health > /dev/null; then
                             echo "Application is online!"
                             exit 0
                         fi
@@ -52,11 +52,14 @@ pipeline {
 
         stage('Build and Push') {
             steps {
-                script {
-                    docker.withRegistry('', 'dockerhub-credentials-id') {
-                        sh 'docker tag sentiment-api:unstable abdullahghaffarr/sentiment-api:latest'
-                        sh 'docker push abdullahghaffarr/sentiment-api:latest'
-                    }
+                echo "Pushing image to DockerHub natively..."
+                // Native shell authentication bypasses the missing Jenkins plugin
+                withCredentials([string(credentialsId: 'dockerhub-credentials-id', variable: 'DOCKERHUB_TOKEN')]) {
+                    sh '''
+                        echo $DOCKERHUB_TOKEN | docker login -u abdullahghaffarr --password-stdin
+                        docker tag sentiment-api:unstable abdullahghaffarr/sentiment-api:latest
+                        docker push abdullahghaffarr/sentiment-api:latest
+                    '''
                 }
             }
         }
