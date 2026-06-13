@@ -1,34 +1,26 @@
-kpipeline {
+pipeline {
     agent any
 
     options {
-        buildDiscarder(logRotator(numToKeepStr: '3'))
+        buildDiscarder(logRotator(numToKeepStr: '5'))
         disableConcurrentBuilds()
     }
 
     stages {
-        stage('Pre-Flight Cleanup') {
-            steps {
-                // Aggressive cleanup before building to prevent "No space left"
-                sh 'docker system prune -a --volumes -f || true'
-                cleanWs()
-            }
-        }
-
         stage('Fetch') {
             steps {
+                cleanWs()
                 checkout scm
             }
         }
 
         stage('Build and Run') {
             steps {
-                echo "Building application..."
+                echo "Building and running application..."
                 sh 'docker rm -f sentiment-app || true'
                 sh 'docker build -t sentiment-api:unstable .'
                 sh 'docker run -d -p 5000:5000 --name sentiment-app sentiment-api:unstable'
                 
-                // Active Readiness Loop
                 echo "Waiting for ML Model to initialize..."
                 sh '''#!/bin/bash
                     for i in $(seq 1 20); do
@@ -46,12 +38,14 @@ kpipeline {
 
         stage('Unit Test') {
             steps {
+                echo "Running API unit tests..."
                 sh 'docker exec sentiment-app pytest tests/test_api.py'
             }
         }
 
         stage('UI Test') {
             steps {
+                echo "Running Selenium UI tests..."
                 sh 'docker exec sentiment-app pytest tests/test_ui.py'
             }
         }
@@ -69,6 +63,7 @@ kpipeline {
 
         stage('Deploy to Minikube') {
             steps {
+                echo "Deploying to Kubernetes..."
                 sh 'kubectl apply -f k8s/blue-deployment.yaml'
                 sh 'kubectl apply -f k8s/green-deployment.yaml'
                 sh 'kubectl apply -f k8s/service.yaml'
