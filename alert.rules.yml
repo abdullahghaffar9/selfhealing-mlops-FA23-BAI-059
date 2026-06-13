@@ -1,11 +1,11 @@
 groups:
   - name: sentiment-alert-group
     rules:
-      - [cite_start]alert: ModelConfidenceDrift # Must be named exactly as specified [cite: 273, 274, 303]
-        [cite_start]expr: prediction_confidence_score < 0.68 # Uses your assigned threshold [cite: 273, 274]
-        [cite_start]for: 1m # Alert must remain true for 1 minute continuously [cite: 273, 303]
+      - alert: ModelConfidenceDrift
+        expr: prediction_confidence_score < 0.68
+        for: 1m
         labels:
-          [cite_start]severity: critical # Severity set to critical [cite: 273]
+          severity: critical
         annotations:
-          summary: "Model prediction accuracy degradation detected for roll number FA23-BAI-059"
-          description: "The prediction confidence score has dropped below 0.68 for more than 1 minute."
+          summary: "Model confidence drift detected"
+          description: "Prediction confidence score has dropped below 0.68."
