@@ -8,7 +8,7 @@ last_confidence = 0.95
 @app.route("/health", methods=["GET"])
 def health():
     # Replace XXXX with your assigned Stable Model Code
-    return jsonify({"status": "healthy", "model": "rule-based-stable-v0", "model_version": "stable-v0-YOUR_ASSIGNED_CODE"})
+    return jsonify({"status": "healthy", "model": "rule-based-stable-v0", "model_version": "stable-v0-B08C"})
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -23,7 +23,7 @@ def predict():
     else:
         label, confidence = "POSITIVE", 0.95
     last_confidence = confidence
-    return jsonify({"label": label, "confidence": confidence, "model_version": "stable-v0-YOUR_ASSIGNED_CODE"})
+    return jsonify({"label": label, "confidence": confidence, "model_version": "stable-v0-B08C"})
 
 @app.route("/api/latest-confidence", methods=["GET"])
 def latest_confidence():
