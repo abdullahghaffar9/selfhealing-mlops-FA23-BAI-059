@@ -18,21 +18,19 @@ pipeline {
         stage('Build and Run') {
             steps {
                 echo "Building and running application..."
-                // Cleanup previous runs to avoid port conflicts
+                // Defensive cleanup
                 sh 'docker rm -f sentiment-app || true'
-                
                 sh 'docker build -t sentiment-api:unstable .'
                 
-                // Start container
+                // Start the app on port 5000
                 sh 'docker run -d -p 5000:5000 --name sentiment-app sentiment-api:unstable'
                 
-                // ACTIVE READINESS CHECK: Polls the health endpoint until ready
-                echo "Waiting for ML Model to initialize (warm-up)..."
-                sh '''
-                    # Poll every 5s for up to 100s (20 attempts)
-                    for i in {1..20}; do
+                // ACTIVE READINESS CHECK (Fixed with seq for shell compatibility)
+                echo "Waiting for ML Model to initialize..."
+                sh '''#!/bin/bash
+                    for i in $(seq 1 20); do
                         echo "Checking readiness (Attempt $i)..."
-                        if curl -s http://localhost:5000/health > /dev/null; then
+                        if curl -s -f http://localhost:5000/health > /dev/null; then
                             echo "Application is online and ready!"
                             exit 0
                         fi
@@ -62,7 +60,7 @@ pipeline {
         stage('Build and Push') {
             steps {
                 script {
-                    // Replace 'dockerhub-credentials-id' with your actual Jenkins Credential ID
+                    // Ensure you have "dockerhub-credentials-id" in Jenkins Credentials
                     docker.withRegistry('', 'dockerhub-credentials-id') {
                         sh 'docker tag sentiment-api:unstable abdullahghaffarr/sentiment-api:latest'
                         sh 'docker push abdullahghaffarr/sentiment-api:latest'
