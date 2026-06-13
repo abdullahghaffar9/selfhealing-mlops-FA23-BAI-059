@@ -1,22 +1,29 @@
-pipeline {
+kpipeline {
     agent any
 
     options {
-        buildDiscarder(logRotator(numToKeepStr: '5'))
+        buildDiscarder(logRotator(numToKeepStr: '3'))
         disableConcurrentBuilds()
     }
 
     stages {
+        stage('Pre-Flight Cleanup') {
+            steps {
+                // Aggressive cleanup before building to prevent "No space left"
+                sh 'docker system prune -a --volumes -f || true'
+                cleanWs()
+            }
+        }
+
         stage('Fetch') {
             steps {
-                cleanWs()
                 checkout scm
             }
         }
 
         stage('Build and Run') {
             steps {
-                echo "Building and running application..."
+                echo "Building application..."
                 sh 'docker rm -f sentiment-app || true'
                 sh 'docker build -t sentiment-api:unstable .'
                 sh 'docker run -d -p 5000:5000 --name sentiment-app sentiment-api:unstable'
@@ -31,6 +38,7 @@ pipeline {
                         fi
                         sleep 5
                     done
+                    docker logs sentiment-app
                     exit 1
                 '''
             }
@@ -38,16 +46,12 @@ pipeline {
 
         stage('Unit Test') {
             steps {
-                echo "Running API unit tests inside container..."
-                // RUN INSIDE CONTAINER
                 sh 'docker exec sentiment-app pytest tests/test_api.py'
             }
         }
 
         stage('UI Test') {
             steps {
-                echo "Running Selenium UI tests inside container..."
-                // RUN INSIDE CONTAINER
                 sh 'docker exec sentiment-app pytest tests/test_ui.py'
             }
         }
@@ -65,7 +69,6 @@ pipeline {
 
         stage('Deploy to Minikube') {
             steps {
-                echo "Deploying to Kubernetes..."
                 sh 'kubectl apply -f k8s/blue-deployment.yaml'
                 sh 'kubectl apply -f k8s/green-deployment.yaml'
                 sh 'kubectl apply -f k8s/service.yaml'
