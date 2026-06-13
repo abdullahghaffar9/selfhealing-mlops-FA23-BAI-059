@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     options {
-        // Automatically purge old build logs to prevent disk bloat
         buildDiscarder(logRotator(numToKeepStr: '5'))
         disableConcurrentBuilds()
     }
@@ -10,7 +9,6 @@ pipeline {
     stages {
         stage('Fetch') {
             steps {
-                // Wipe workspace clean to avoid permission conflicts
                 cleanWs()
                 checkout scm
             }
@@ -18,18 +16,27 @@ pipeline {
 
         stage('Build and Run') {
             steps {
-                echo "Building and running application for testing..."
-                // Defensive cleanup: remove existing container before starting
+                echo "Building and running application..."
                 sh 'docker rm -f sentiment-app || true'
-                
-                // Build the image
                 sh 'docker build -t sentiment-api:unstable .'
-                
-                // Map 5000 to 5000 for the CI test environment to match test suite config
                 sh 'docker run -d -p 5000:5000 --name sentiment-app sentiment-api:unstable'
                 
-                // Wait for the app to initialize
-                sleep 5
+                // --- ACTIVE READINESS CHECK ---
+                echo "Waiting for ML Model to initialize..."
+                sh '''
+                    # Try 20 times (every 5s = 100s total wait)
+                    for i in {1..20}; do
+                        if curl -s http://localhost:5000/health > /dev/null; then
+                            echo "Application is online and ready!"
+                            exit 0
+                        fi
+                        echo "Attempt $i: App warming up..."
+                        sleep 5
+                    done
+                    echo "App failed to respond after 100s. Checking logs:"
+                    docker logs sentiment-app
+                    exit 1
+                '''
             }
         }
 
@@ -50,7 +57,6 @@ pipeline {
         stage('Build and Push') {
             steps {
                 script {
-                    // Requires "dockerhub-credentials-id" in Jenkins Credentials
                     docker.withRegistry('', 'dockerhub-credentials-id') {
                         sh 'docker tag sentiment-api:unstable abdullahghaffarr/sentiment-api:latest'
                         sh 'docker push abdullahghaffarr/sentiment-api:latest'
@@ -72,7 +78,6 @@ pipeline {
 
     post {
         always {
-            // Cleanup workspace and stop the container to free disk/port
             cleanWs()
             sh 'docker rm -f sentiment-app || true'
         }
