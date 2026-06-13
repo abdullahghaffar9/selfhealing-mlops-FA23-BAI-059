@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     options {
-        // Automatically delete old build artifacts to save disk space
+        // Automatically purge old build logs to prevent disk bloat
         buildDiscarder(logRotator(numToKeepStr: '5'))
         disableConcurrentBuilds()
     }
@@ -10,18 +10,26 @@ pipeline {
     stages {
         stage('Fetch') {
             steps {
-                cleanWs() // Ensure workspace is empty before starting
+                // Wipe workspace clean to avoid permission conflicts
+                cleanWs()
                 checkout scm
             }
         }
 
         stage('Build and Run') {
             steps {
-                echo "Building application image..."
-                // Build the image using the optimized Dockerfile
+                echo "Building and running application for testing..."
+                // Defensive cleanup: remove existing container before starting
+                sh 'docker rm -f sentiment-app || true'
+                
+                // Build the image
                 sh 'docker build -t sentiment-api:unstable .'
-                // Run the container
-                sh 'docker run -d -p 32500:5000 --name sentiment-app sentiment-api:unstable || true'
+                
+                // Map 5000 to 5000 for the CI test environment to match test suite config
+                sh 'docker run -d -p 5000:5000 --name sentiment-app sentiment-api:unstable'
+                
+                // Wait for the app to initialize
+                sleep 5
             }
         }
 
@@ -42,7 +50,7 @@ pipeline {
         stage('Build and Push') {
             steps {
                 script {
-                    // Uses the registry credentials stored in Jenkins
+                    // Requires "dockerhub-credentials-id" in Jenkins Credentials
                     docker.withRegistry('', 'dockerhub-credentials-id') {
                         sh 'docker tag sentiment-api:unstable abdullahghaffarr/sentiment-api:latest'
                         sh 'docker push abdullahghaffarr/sentiment-api:latest'
@@ -53,7 +61,7 @@ pipeline {
 
         stage('Deploy to Minikube') {
             steps {
-                echo "Deploying to Kubernetes cluster..."
+                echo "Deploying to Kubernetes..."
                 sh 'kubectl apply -f k8s/blue-deployment.yaml'
                 sh 'kubectl apply -f k8s/green-deployment.yaml'
                 sh 'kubectl apply -f k8s/service.yaml'
@@ -64,9 +72,8 @@ pipeline {
 
     post {
         always {
-            // Cleanup workspace after build to free disk space
+            // Cleanup workspace and stop the container to free disk/port
             cleanWs()
-            // Optional: Remove container to prevent port conflicts
             sh 'docker rm -f sentiment-app || true'
         }
     }
